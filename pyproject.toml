@@ -1,10 +1,24 @@
 [project]
 name = "igreport"
 version = "0.1.0"
-description = "Add your description here"
+description = "A library for structured exception reporting and formatting"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
+authors = [
+    {name = "igreport"}
+]
+keywords = ["exception", "error", "reporting", "traceback", "debugging"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Debuggers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Logging",
+]
 
 [dependency-groups]
 dev = [

@@ -457,7 +457,7 @@ class TestHelperFunctions:
         mock_frame.f_globals = {}
         mock_frame.f_code.co_name = "test_function"
 
-        with patch("igreport._is_excludable_local") as mock_excludable:
+        with patch("igreport.utils._is_excludable_local") as mock_excludable:
             # Mock the excludable function to return expected results
             def side_effect(name, value, frame) -> None:
                 return name.startswith("__") or name in ["sys", "len", "int"]
@@ -703,7 +703,7 @@ class TestCreateExceptionReport:
             assert report.contexts is None
             assert report.threads is not None  # threads are always included
 
-    @patch("igreport.linecache")
+    @patch("igreport.core.linecache")
     def test_create_exception_report_source_context(self, mock_linecache) -> None:
         """Test that source context is captured."""
         # Mock linecache to return predictable content
@@ -884,7 +884,7 @@ class TestFormatExceptionReport:
 
         # Check exception info
         assert "ValueError: test error message" in formatted
-        assert "Traceback (most recent call last) -> None:" in formatted
+        assert "Traceback (most recent call last):" in formatted
         assert 'File "test.py", line 42, in test_module.test_func' in formatted
 
     def test_format_exception_report_with_env(self) -> None:
@@ -1539,8 +1539,8 @@ class TestIntegration:
             if len(actual_frames) == 10:
                 assert len(truncated_frames) >= 1
 
-    @patch("igreport.socket.gethostname")
-    @patch("igreport.platform.system")
+    @patch("igreport.core.socket.gethostname")
+    @patch("igreport.core.platform.system")
     def test_environment_mocking(self, mock_system, mock_hostname) -> None:
         """Test that environment information can be mocked."""
         mock_hostname.return_value = "test-server-123"
@@ -1716,7 +1716,7 @@ class TestMissingCoverage:
         except ValueError as e:
             # Test with an object that fails both str and repr
             mock_locals = {"unprintable": obj}
-            with patch("igreport._filter_locals_for_report", return_value=mock_locals):
+            with patch("igreport.utils._filter_locals_for_report", return_value=mock_locals):
                 _report = create_exception_report(e, capture_locals=True)
                 # Should not crash and handle unprintable objects
 
@@ -1766,7 +1766,7 @@ class TestMissingCoverage:
             raise ValueError("test")
         except ValueError as e:
             # Test through mocking the source context function
-            with patch("igreport.linecache.getline", return_value=""):
+            with patch("igreport.core.linecache.getline", return_value=""):
                 report = create_exception_report(e, context_lines=2)
                 assert isinstance(report, ExceptionReport)
 
@@ -1783,7 +1783,7 @@ class TestMissingCoverage:
         except ValueError as e:
             # Mock _filter_locals_for_report to raise an exception
             with patch(
-                "igreport._filter_locals_for_report",
+                "igreport.utils._filter_locals_for_report",
                 side_effect=RuntimeError("Filter failed"),
             ):
                 report = create_exception_report(e, capture_locals=True)
@@ -1810,17 +1810,17 @@ class TestMissingCoverage:
             site_path = "/usr/lib/python3.12/site-packages"
 
             # Mock sys.path to include our test site-packages path
-            with patch("igreport.sys.path", [site_path]):
+            with patch("igreport.core.sys.path", [site_path]):
                 # Create frame data with stdlib path
                 with patch(
-                    "igreport.os.path.abspath", return_value=f"{stdlib_path}/test.py"
+                    "igreport.core.os.path.abspath", return_value=f"{stdlib_path}/test.py"
                 ):
                     _report = create_exception_report(e)
                     # Should mark stdlib frames as not in_app
 
                 # Create frame data with site-packages path
                 with patch(
-                    "igreport.os.path.abspath", return_value=f"{site_path}/test.py"
+                    "igreport.core.os.path.abspath", return_value=f"{site_path}/test.py"
                 ):
                     _report = create_exception_report(e)
                     # Should mark site-packages frames as not in_app
@@ -1947,7 +1947,7 @@ class TestMissingCoverage:
             raise ValueError("test")
         except ValueError as e:
             # Mock os.path.abspath to return empty string to trigger early return
-            with patch("igreport.os.path.abspath", return_value=""):
+            with patch("igreport.core.os.path.abspath", return_value=""):
                 report = create_exception_report(e, context_lines=5)
 
                 # Should still create report successfully
