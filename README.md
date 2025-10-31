@@ -316,7 +316,3 @@ pytest test_igreport.py -v
 ## License
 
 [License information here]
-
-## Contributing
-
-[Contributing guidelines here]
