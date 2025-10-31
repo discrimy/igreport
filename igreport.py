@@ -105,7 +105,7 @@ class RuntimeContext:
 
     name: str
     version: str
-    build: tuple
+    build: tuple[str, str]
     implementation: str
 
 
@@ -212,7 +212,7 @@ class ExceptionReport:
         )
 
 
-def _is_excludable_local(name: str, value, frame: FrameType) -> bool:
+def _is_excludable_local(name: str, value: Any, frame: FrameType) -> bool:
     """
     Decide whether a local variable should be excluded from the report.
 
@@ -279,8 +279,8 @@ def create_exception_report(
     exc: BaseException | None = None,
     /,
     *,
-    context: dict | None = None,
-    tags: dict | None = None,
+    context: Dict[str, Any] | None = None,
+    tags: Dict[str, str] | None = None,
     level: str = "error",
     max_frames: int = 200,
     context_lines: int = 3,
@@ -325,10 +325,10 @@ def create_exception_report(
 
     # ---- helpers -------------------------------------------------------------
 
-    def _is_primitive(x) -> bool:
+    def _is_primitive(x: Any) -> bool:
         return isinstance(x, (type(None), bool, int, float, str))
 
-    def _safe_str(x) -> str:
+    def _safe_str(x: Any) -> str:
         try:
             s = str(x)
         except Exception:
@@ -349,7 +349,7 @@ def create_exception_report(
         substrings = ("password", "secret", "token", "auth", "key", "cookie", "passwd")
         return any(s in k_low for s in substrings)
 
-    def _serialize(obj, depth=0):
+    def _serialize(obj: Any, depth: int = 0) -> Any:
         if depth >= max_depth:
             return f"<max_depth:{max_depth} {type(obj).__name__}>"
 
@@ -408,9 +408,11 @@ def create_exception_report(
             "repr": _safe_str(obj),
         }
 
-    def _source_context(abs_path: str, lineno: int, ctx_lines: int):
+    def _source_context(
+        abs_path: str, lineno: int, ctx_lines: int
+    ) -> tuple[List[tuple[int, str]], str, List[tuple[int, str]]]:
         if not abs_path or lineno is None:
-            return [], None, []
+            return [], "", []
         # Ensure linecache has fresh view
         linecache.checkcache(abs_path)
         start = max(1, lineno - ctx_lines)
@@ -424,7 +426,7 @@ def create_exception_report(
             post.append((i, (linecache.getline(abs_path, i) or "").rstrip("\n")))
         return pre, line, post
 
-    def _create_frame_data(frame, lineno: int) -> FrameData:
+    def _create_frame_data(frame: FrameType, lineno: int) -> FrameData:
         # frame: types.FrameType
         f_code = frame.f_code
         abs_path = os.path.abspath(f_code.co_filename)
@@ -467,7 +469,9 @@ def create_exception_report(
             return False
         return True
 
-    def _iter_chain(e: BaseException):
+    def _iter_chain(
+        e: BaseException,
+    ) -> Any:  # Generator[tuple[BaseException, str], None, None]
         """
         Yields (exc, relation) following Python's exception chaining rules:
         - primary exception
@@ -492,7 +496,7 @@ def create_exception_report(
     def _create_exception_block(e: BaseException) -> ExceptionBlock:
         # walk traceback frames (from oldest to newest)
         tb: TracebackType | None = e.__traceback__
-        frames = []
+        frames: List[Union[FrameData, Dict[str, str]]] = []
         count = 0
         # Walk to oldest
         stack = []
@@ -732,10 +736,8 @@ def format_exception_report(
     return "\n".join(lines)
 
 
-def _format_value(value, indent: int = 0) -> str:
+def _format_value(value: Any, indent: int = 0) -> str:
     """Format a serialized value for display."""
-    indent_str = " " * indent
-
     if isinstance(value, dict):
         if "__type__" in value:
             # Special serialized object
@@ -800,7 +802,7 @@ def _format_value(value, indent: int = 0) -> str:
 # ----------------------------- Example usage ---------------------------------
 if __name__ == "__main__":
 
-    def boom(n):
+    def boom(n: int) -> float:
         return 10 / n  # ZeroDivisionError when n == 0
 
     try:

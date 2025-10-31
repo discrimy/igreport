@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+from typing import Any, Dict
 from unittest.mock import Mock, patch
 from types import FrameType
 
@@ -27,13 +28,13 @@ from igreport import (
 class TestDataClasses:
     """Test the data classes and their serialization/deserialization."""
 
-    def test_mechanism_creation(self):
+    def test_mechanism_creation(self) -> None:
         """Test Mechanism dataclass creation."""
         mechanism = Mechanism(type="python", handled=False)
         assert mechanism.type == "python"
         assert mechanism.handled is False
 
-    def test_frame_data_creation(self):
+    def test_frame_data_creation(self) -> None:
         """Test FrameData dataclass creation."""
         frame_data = FrameData(
             abs_path="/path/to/file.py",
@@ -65,7 +66,7 @@ class TestDataClasses:
         assert frame_data.vars == {"x": 1, "y": 2}
         assert frame_data.vars_error is None
 
-    def test_exception_block_creation(self):
+    def test_exception_block_creation(self) -> None:
         """Test ExceptionBlock dataclass creation."""
         mechanism = Mechanism(type="python", handled=False)
         frame_data = FrameData(
@@ -98,7 +99,7 @@ class TestDataClasses:
         assert exc_block.frames == [frame_data]
         assert exc_block.relation == "exception"
 
-    def test_thread_info_creation(self):
+    def test_thread_info_creation(self) -> None:
         """Test ThreadInfo dataclass creation."""
         thread_info = ThreadInfo(
             current_thread_id=123456, current_thread_name="MainThread"
@@ -107,7 +108,7 @@ class TestDataClasses:
         assert thread_info.current_thread_id == 123456
         assert thread_info.current_thread_name == "MainThread"
 
-    def test_os_context_creation(self):
+    def test_os_context_creation(self) -> None:
         """Test OSContext dataclass creation."""
         os_context = OSContext(
             name="Linux",
@@ -121,7 +122,7 @@ class TestDataClasses:
         assert os_context.release == "5.4.0-74-generic"
         assert os_context.platform == "Linux-5.4.0-74-generic-x86_64"
 
-    def test_runtime_context_creation(self):
+    def test_runtime_context_creation(self) -> None:
         """Test RuntimeContext dataclass creation."""
         runtime_context = RuntimeContext(
             name="CPython",
@@ -135,7 +136,7 @@ class TestDataClasses:
         assert runtime_context.build == ("main", "Oct  5 2020 11:02:53")
         assert runtime_context.implementation == "CPython"
 
-    def test_process_context_creation(self):
+    def test_process_context_creation(self) -> None:
         """Test ProcessContext dataclass creation."""
         process_context = ProcessContext(
             pid=12345,
@@ -149,7 +150,7 @@ class TestDataClasses:
         assert process_context.executable == "/usr/bin/python3"
         assert process_context.cwd == "/home/user/project"
 
-    def test_contexts_creation(self):
+    def test_contexts_creation(self) -> None:
         """Test Contexts dataclass creation."""
         os_context = OSContext("Linux", "5.4.0", "5.4.0-74-generic", "Linux-x86_64")
         runtime_context = RuntimeContext(
@@ -167,7 +168,7 @@ class TestDataClasses:
         assert contexts.runtime == runtime_context
         assert contexts.process == process_context
 
-    def test_exception_report_to_dict(self):
+    def test_exception_report_to_dict(self) -> None:
         """Test ExceptionReport to_dict method."""
         thread_info = ThreadInfo(123456, "MainThread")
         mechanism = Mechanism("python", False)
@@ -216,7 +217,7 @@ class TestDataClasses:
         assert result["level"] == "error"
         assert result["platform"] == "python"
 
-    def test_exception_report_from_dict(self):
+    def test_exception_report_from_dict(self) -> None:
         """Test ExceptionReport from_dict method."""
         data = {
             "event_id": "test-id",
@@ -273,9 +274,9 @@ class TestDataClasses:
         assert isinstance(report.exceptions[0], ExceptionBlock)
         assert isinstance(report.exceptions[0].frames[0], FrameData)
 
-    def test_exception_report_from_dict_with_contexts(self):
+    def test_exception_report_from_dict_with_contexts(self) -> None:
         """Test ExceptionReport from_dict with contexts."""
-        data = {
+        data: Dict[str, Any] = {
             "event_id": "test-id",
             "timestamp": "2023-01-01T00:00:00.000Z",
             "level": "error",
@@ -323,7 +324,7 @@ class TestDataClasses:
         assert report.contexts.runtime.name == "CPython"
         assert report.contexts.process.pid == 12345
 
-    def test_exception_report_from_dict_with_truncated_frames(self):
+    def test_exception_report_from_dict_with_truncated_frames(self) -> None:
         """Test ExceptionReport from_dict with truncated frames."""
         data = {
             "event_id": "test-id",
@@ -382,38 +383,38 @@ class TestDataClasses:
 class TestHelperFunctions:
     """Test the helper functions."""
 
-    def test_is_excludable_local_dunder_names(self):
+    def test_is_excludable_local_dunder_names(self) -> None:
         """Test that dunder names are excluded."""
         mock_frame = Mock(spec=FrameType)
         assert _is_excludable_local("__name__", "test", mock_frame) is True
         assert _is_excludable_local("__file__", "/test.py", mock_frame) is True
         assert _is_excludable_local("__builtins__", {}, mock_frame) is True
 
-    def test_is_excludable_local_modules(self):
+    def test_is_excludable_local_modules(self) -> None:
         """Test that modules are excluded."""
         import sys
 
         mock_frame = Mock(spec=FrameType)
         assert _is_excludable_local("sys", sys, mock_frame) is True
 
-    def test_is_excludable_local_functions(self):
+    def test_is_excludable_local_functions(self) -> None:
         """Test that functions and methods are excluded."""
 
-        def test_func():
+        def test_func() -> None:
             pass
 
         mock_frame = Mock(spec=FrameType)
         assert _is_excludable_local("test_func", test_func, mock_frame) is True
         assert _is_excludable_local("len", len, mock_frame) is True
 
-    def test_is_excludable_local_types(self):
+    def test_is_excludable_local_types(self) -> None:
         """Test that types/classes are excluded."""
         mock_frame = Mock(spec=FrameType)
         assert _is_excludable_local("int", int, mock_frame) is True
         assert _is_excludable_local("list", list, mock_frame) is True
         assert _is_excludable_local("MyClass", type, mock_frame) is True
 
-    def test_is_excludable_local_primitives_kept(self):
+    def test_is_excludable_local_primitives_kept(self) -> None:
         """Test that primitive values are kept."""
         mock_frame = Mock(spec=FrameType)
         mock_frame.f_globals = {}
@@ -424,7 +425,7 @@ class TestHelperFunctions:
         assert _is_excludable_local("flag", True, mock_frame) is False
         assert _is_excludable_local("value", None, mock_frame) is False
 
-    def test_is_excludable_local_globals_rebound(self):
+    def test_is_excludable_local_globals_rebound(self) -> None:
         """Test globals rebound into locals."""
         mock_frame = Mock(spec=FrameType)
         mock_frame.f_globals = {"sys": sys}
@@ -441,7 +442,7 @@ class TestHelperFunctions:
         mock_frame.f_code.co_name = "<module>"
         assert _is_excludable_local("x", 42, mock_frame) is False
 
-    def test_filter_locals_for_report(self):
+    def test_filter_locals_for_report(self) -> None:
         """Test filtering locals for report."""
         # Create a mock frame with various local variables
         mock_frame = Mock(spec=FrameType)
@@ -458,7 +459,7 @@ class TestHelperFunctions:
 
         with patch("igreport._is_excludable_local") as mock_excludable:
             # Mock the excludable function to return expected results
-            def side_effect(name, value, frame):
+            def side_effect(name, value, frame) -> None:
                 return name.startswith("__") or name in ["sys", "len", "int"]
 
             mock_excludable.side_effect = side_effect
@@ -473,7 +474,7 @@ class TestHelperFunctions:
             assert "len" not in result
             assert "int" not in result
 
-    def test_filter_locals_for_report_empty_locals(self):
+    def test_filter_locals_for_report_empty_locals(self) -> None:
         """Test filtering when locals is empty."""
         mock_frame = Mock(spec=FrameType)
         mock_frame.f_locals = {}
@@ -481,7 +482,7 @@ class TestHelperFunctions:
         result = _filter_locals_for_report(mock_frame)
         assert result == {}
 
-    def test_filter_locals_for_report_none_locals(self):
+    def test_filter_locals_for_report_none_locals(self) -> None:
         """Test filtering when locals is None."""
         mock_frame = Mock(spec=FrameType)
         mock_frame.f_locals = None
@@ -489,7 +490,7 @@ class TestHelperFunctions:
         result = _filter_locals_for_report(mock_frame)
         assert result == {}
 
-    def test_format_value_primitives(self):
+    def test_format_value_primitives(self) -> None:
         """Test formatting primitive values."""
         assert _format_value(42) == "42"
         assert _format_value(3.14) == "3.14"
@@ -497,19 +498,19 @@ class TestHelperFunctions:
         assert _format_value(None) == "None"
         assert _format_value("hello") == "'hello'"
 
-    def test_format_value_long_string(self):
+    def test_format_value_long_string(self) -> None:
         """Test formatting long strings."""
         long_string = "a" * 150
         result = _format_value(long_string)
         assert result.endswith("...")
         assert len(result) <= 103  # 97 chars + quotes + "..."
 
-    def test_format_value_empty_containers(self):
+    def test_format_value_empty_containers(self) -> None:
         """Test formatting empty containers."""
         assert _format_value({}) == "{}"
         assert _format_value([]) == "[]"
 
-    def test_format_value_simple_dict(self):
+    def test_format_value_simple_dict(self) -> None:
         """Test formatting simple dictionaries."""
         # Single item dict
         result = _format_value({"key": "value"})
@@ -520,24 +521,24 @@ class TestHelperFunctions:
         assert "'a': 1" in result
         assert "'b': 2" in result
 
-    def test_format_value_complex_dict(self):
+    def test_format_value_complex_dict(self) -> None:
         """Test formatting complex dictionaries."""
         complex_dict = {f"key{i}": f"value{i}" for i in range(10)}
         result = _format_value(complex_dict)
         assert "...10 items..." in result
 
-    def test_format_value_simple_list(self):
+    def test_format_value_simple_list(self) -> None:
         """Test formatting simple lists."""
         result = _format_value([1, 2, 3])
         assert result == "[1, 2, 3]"
 
-    def test_format_value_long_list(self):
+    def test_format_value_long_list(self) -> None:
         """Test formatting long lists."""
         long_list = list(range(100))
         result = _format_value(long_list)
         assert "...100 items..." in result
 
-    def test_format_value_special_types(self):
+    def test_format_value_special_types(self) -> None:
         """Test formatting special serialized types."""
         # Bytes type
         bytes_value = {"__type__": "bytes", "len": 1024, "preview": "deadbeef"}
@@ -563,12 +564,12 @@ class TestHelperFunctions:
 class TestCreateExceptionReport:
     """Test the main create_exception_report function."""
 
-    def test_create_exception_report_no_exception_error(self):
+    def test_create_exception_report_no_exception_error(self) -> None:
         """Test that calling without exception raises error."""
         with pytest.raises(RuntimeError, match="must be called inside an except block"):
             create_exception_report()
 
-    def test_create_exception_report_simple_exception(self):
+    def test_create_exception_report_simple_exception(self) -> None:
         """Test creating report for simple exception."""
         try:
             raise ValueError("Test error")
@@ -583,7 +584,7 @@ class TestCreateExceptionReport:
             assert report.exceptions[0].message == "Test error"
             assert report.exceptions[0].relation == "exception"
 
-    def test_create_exception_report_with_context_and_tags(self):
+    def test_create_exception_report_with_context_and_tags(self) -> None:
         """Test creating report with context and tags."""
         try:
             raise ValueError("Test error")
@@ -600,7 +601,7 @@ class TestCreateExceptionReport:
             assert "user_id" in report.extra
             assert "request_id" in report.extra
 
-    def test_create_exception_report_chained_exceptions(self):
+    def test_create_exception_report_chained_exceptions(self) -> None:
         """Test creating report for chained exceptions."""
         try:
             try:
@@ -616,7 +617,7 @@ class TestCreateExceptionReport:
             assert report.exceptions[1].type == "ValueError"
             assert report.exceptions[1].relation == "cause"
 
-    def test_create_exception_report_context_exceptions(self):
+    def test_create_exception_report_context_exceptions(self) -> None:
         """Test creating report for context exceptions."""
         try:
             try:
@@ -632,11 +633,11 @@ class TestCreateExceptionReport:
             assert report.exceptions[1].type == "ValueError"
             assert report.exceptions[1].relation == "context"
 
-    def test_create_exception_report_no_locals(self):
+    def test_create_exception_report_no_locals(self) -> None:
         """Test creating report without capturing locals."""
         try:
-            x = 42
-            y = "test"
+            _x = 42
+            _y = "test"
             raise ValueError("Test error")
         except ValueError as e:
             report = create_exception_report(e, capture_locals=False)
@@ -655,11 +656,11 @@ class TestCreateExceptionReport:
             assert test_frame is not None
             assert test_frame.vars is None
 
-    def test_create_exception_report_with_locals(self):
+    def test_create_exception_report_with_locals(self) -> None:
         """Test creating report with locals."""
         try:
-            x = 42
-            y = "test"
+            _x = 42
+            _y = "test"
             raise ValueError("Test error")
         except ValueError as e:
             report = create_exception_report(e, capture_locals=True)
@@ -679,7 +680,7 @@ class TestCreateExceptionReport:
             assert test_frame.vars is not None
             # Note: exact variable capture depends on implementation details
 
-    def test_create_exception_report_include_env(self):
+    def test_create_exception_report_include_env(self) -> None:
         """Test creating report with environment info."""
         try:
             raise ValueError("Test error")
@@ -692,7 +693,7 @@ class TestCreateExceptionReport:
             assert report.contexts.process is not None
             assert report.threads is not None
 
-    def test_create_exception_report_no_env(self):
+    def test_create_exception_report_no_env(self) -> None:
         """Test creating report without environment info."""
         try:
             raise ValueError("Test error")
@@ -703,7 +704,7 @@ class TestCreateExceptionReport:
             assert report.threads is not None  # threads are always included
 
     @patch("igreport.linecache")
-    def test_create_exception_report_source_context(self, mock_linecache):
+    def test_create_exception_report_source_context(self, mock_linecache) -> None:
         """Test that source context is captured."""
         # Mock linecache to return predictable content
         mock_linecache.getline.side_effect = lambda path, lineno: f"line {lineno}\n"
@@ -722,40 +723,40 @@ class TestCreateExceptionReport:
                         assert len(frame.post_context) <= 2
                         break
 
-    def test_create_exception_report_redaction(self):
+    def test_create_exception_report_redaction(self) -> None:
         """Test that sensitive keys are redacted."""
         try:
-            password = "secret123"
-            api_key = "key123"
-            normal_var = "safe_value"
+            _password = "secret123"
+            _api_key = "key123"
+            _normal_var = "safe_value"
             raise ValueError("Test error")
         except ValueError as e:
             report = create_exception_report(e, capture_locals=True)
 
             # Check that redacted keys don't appear in serialized form
             report_dict = report.to_dict()
-            report_str = json.dumps(report_dict)
+            _report_str = json.dumps(report_dict)
 
             # Check that sensitive keys are detected and redacted in the vars section
             # Note: The implementation may show raw values in some contexts
             # but should redact in the locals/vars sections
-            found_redacted = False
+            _found_redacted = False
             for exc_block in report.exceptions:
                 for frame in exc_block.frames:
                     if isinstance(frame, FrameData) and frame.vars:
                         vars_str = json.dumps(frame.vars)
                         if "<redacted>" in vars_str:
-                            found_redacted = True
+                            _found_redacted = True
                             break
 
             # At minimum, we should find some redaction markers
             # The exact redaction behavior may vary based on context
             # This test verifies the redaction mechanism exists
 
-    def test_create_exception_report_max_frames(self):
+    def test_create_exception_report_max_frames(self) -> None:
         """Test max_frames limitation."""
 
-        def recursive_function(n):
+        def recursive_function(n) -> None:
             if n <= 0:
                 raise ValueError("Deep recursion error")
             return recursive_function(n - 1)
@@ -776,7 +777,7 @@ class TestCreateExceptionReport:
             if len(actual_frames) == 3:
                 assert len(truncated_frames) >= 1
 
-    def test_create_exception_report_max_str_len(self):
+    def test_create_exception_report_max_str_len(self) -> None:
         """Test string length truncation."""
         try:
             long_string = "x" * 2000
@@ -789,11 +790,11 @@ class TestCreateExceptionReport:
             assert len(exc_message) <= 130  # 100 + some buffer for truncation info
             assert "truncated" in exc_message
 
-    def test_create_exception_report_custom_redact_keys(self):
+    def test_create_exception_report_custom_redact_keys(self) -> None:
         """Test custom redaction keys."""
         try:
-            custom_secret = "my_secret_value"
-            normal_var = "safe_value"
+            _custom_secret = "my_secret_value"
+            _normal_var = "safe_value"
             raise ValueError("Test error")
         except ValueError as e:
             report = create_exception_report(
@@ -801,15 +802,15 @@ class TestCreateExceptionReport:
             )
 
             # Check that custom keys are redacted in vars section
-            report_dict = report.to_dict()
-            found_redacted = False
+            _report_dict = report.to_dict()
+            _found_redacted = False
             for exc_block in report.exceptions:
                 for frame in exc_block.frames:
                     if isinstance(frame, FrameData) and frame.vars:
                         if "custom_secret" in frame.vars:
                             # The key should be present but value should be redacted
                             if frame.vars["custom_secret"] == "<redacted>":
-                                found_redacted = True
+                                _found_redacted = True
                                 break
 
             # Should find redaction of custom secret
@@ -819,7 +820,7 @@ class TestCreateExceptionReport:
 class TestFormatExceptionReport:
     """Test the format_exception_report function."""
 
-    def test_format_exception_report_basic(self):
+    def test_format_exception_report_basic(self) -> None:
         """Test basic formatting of exception report."""
         # Create a minimal exception report
         thread_info = ThreadInfo(123456, "MainThread")
@@ -883,10 +884,10 @@ class TestFormatExceptionReport:
 
         # Check exception info
         assert "ValueError: test error message" in formatted
-        assert "Traceback (most recent call last):" in formatted
+        assert "Traceback (most recent call last) -> None:" in formatted
         assert 'File "test.py", line 42, in test_module.test_func' in formatted
 
-    def test_format_exception_report_with_env(self):
+    def test_format_exception_report_with_env(self) -> None:
         """Test formatting with environment context."""
         os_context = OSContext("Linux", "5.4.0", "5.4.0-74-generic", "Linux-x86_64")
         runtime_context = RuntimeContext(
@@ -935,7 +936,7 @@ class TestFormatExceptionReport:
         assert "PID: 12345" in formatted
         assert "CWD: /home/user" in formatted
 
-    def test_format_exception_report_no_env(self):
+    def test_format_exception_report_no_env(self) -> None:
         """Test formatting without environment context."""
         thread_info = ThreadInfo(123456, "MainThread")
         mechanism = Mechanism("python", False)
@@ -970,7 +971,7 @@ class TestFormatExceptionReport:
         assert "OS:" not in formatted
         assert "Python:" not in formatted
 
-    def test_format_exception_report_chained_exceptions(self):
+    def test_format_exception_report_chained_exceptions(self) -> None:
         """Test formatting chained exceptions."""
         thread_info = ThreadInfo(123456, "MainThread")
         mechanism = Mechanism("python", False)
@@ -1021,7 +1022,7 @@ class TestFormatExceptionReport:
             in formatted
         )
 
-    def test_format_exception_report_context_exceptions(self):
+    def test_format_exception_report_context_exceptions(self) -> None:
         """Test formatting context exceptions."""
         thread_info = ThreadInfo(123456, "MainThread")
         mechanism = Mechanism("python", False)
@@ -1072,7 +1073,7 @@ class TestFormatExceptionReport:
             in formatted
         )
 
-    def test_format_exception_report_with_vars(self):
+    def test_format_exception_report_with_vars(self) -> None:
         """Test formatting with local variables."""
         thread_info = ThreadInfo(123456, "MainThread")
         mechanism = Mechanism("python", False)
@@ -1121,7 +1122,7 @@ class TestFormatExceptionReport:
         assert "x = 42" in formatted
         assert "name = 'test'" in formatted
 
-    def test_format_exception_report_no_vars(self):
+    def test_format_exception_report_no_vars(self) -> None:
         """Test formatting without local variables."""
         thread_info = ThreadInfo(123456, "MainThread")
         mechanism = Mechanism("python", False)
@@ -1168,7 +1169,7 @@ class TestFormatExceptionReport:
 
         assert "Local variables:" not in formatted
 
-    def test_format_exception_report_truncated_frames(self):
+    def test_format_exception_report_truncated_frames(self) -> None:
         """Test formatting with truncated frames."""
         thread_info = ThreadInfo(123456, "MainThread")
         mechanism = Mechanism("python", False)
@@ -1220,7 +1221,7 @@ class TestFormatExceptionReport:
 
         assert "... reached max_frames=200" in formatted
 
-    def test_format_exception_report_external_frames(self):
+    def test_format_exception_report_external_frames(self) -> None:
         """Test formatting with external (not in-app) frames."""
         thread_info = ThreadInfo(123456, "MainThread")
         mechanism = Mechanism("python", False)
@@ -1286,7 +1287,7 @@ class TestFormatExceptionReport:
         assert "external_module.external_func" in formatted
         assert "app.internal.internal_func" in formatted
 
-    def test_format_exception_report_vars_error(self):
+    def test_format_exception_report_vars_error(self) -> None:
         """Test formatting when there's an error capturing variables."""
         thread_info = ThreadInfo(123456, "MainThread")
         mechanism = Mechanism("python", False)
@@ -1338,14 +1339,14 @@ class TestFormatExceptionReport:
 class TestIntegration:
     """Integration tests using real exceptions."""
 
-    def test_real_exception_integration(self):
+    def test_real_exception_integration(self) -> None:
         """Test with a real exception scenario."""
 
-        def divide_by_zero():
+        def divide_by_zero() -> None:
             return 10 / 0
 
-        def call_divide():
-            x = 42
+        def call_divide() -> None:
+            _x = 42
             result = divide_by_zero()
             return result
 
@@ -1382,20 +1383,20 @@ class TestIntegration:
             assert restored_report.event_id == report.event_id
             assert restored_report.exceptions[0].type == report.exceptions[0].type
 
-    def test_nested_exception_integration(self):
+    def test_nested_exception_integration(self) -> None:
         """Test with nested exception handling."""
 
-        def inner_function():
+        def inner_function() -> None:
             data = {"numbers": [1, 2, 3]}
             return data["missing_key"]
 
-        def middle_function():
+        def middle_function() -> None:
             try:
                 return inner_function()
             except KeyError as e:
                 raise ValueError("Data processing failed") from e
 
-        def outer_function():
+        def outer_function() -> None:
             try:
                 return middle_function()
             except ValueError as e:
@@ -1426,10 +1427,10 @@ class TestIntegration:
             assert "KeyError: 'missing_key'" in formatted
             assert "direct cause" in formatted
 
-    def test_serialization_edge_cases(self):
+    def test_serialization_edge_cases(self) -> None:
         """Test serialization of complex data structures."""
 
-        def create_complex_data():
+        def create_complex_data() -> None:
             # Create various data types that need serialization
 
             complex_data = {
@@ -1462,14 +1463,14 @@ class TestIntegration:
             # Check that truncation happened for large containers
             assert "truncated" in json_str or "max_depth" in json_str
 
-    def test_redaction_integration(self):
+    def test_redaction_integration(self) -> None:
         """Test that sensitive data is properly redacted."""
 
-        def handle_sensitive_data():
-            password = "super_secret_password"
-            api_key = "sk-1234567890abcdef"
-            user_token = "token_abc123"
-            normal_data = "this_is_safe"
+        def handle_sensitive_data() -> None:
+            _password = "super_secret_password"
+            _api_key = "sk-1234567890abcdef"
+            _user_token = "token_abc123"
+            _normal_data = "this_is_safe"
 
             raise ValueError("Authentication failed")
 
@@ -1487,7 +1488,7 @@ class TestIntegration:
 
             # Check that redaction mechanism is working
             # The implementation redacts based on key patterns in variables
-            found_redaction = False
+            _found_redaction = False
             for exc_block in report.exceptions:
                 for frame in exc_block.frames:
                     if isinstance(frame, FrameData) and frame.vars:
@@ -1495,7 +1496,7 @@ class TestIntegration:
                         # Check if any sensitive keys are redacted
                         for key, value in vars_dict.items():
                             if value == "<redacted>":
-                                found_redaction = True
+                                _found_redaction = True
                                 break
 
             # Basic functionality check - report should be created successfully
@@ -1505,10 +1506,10 @@ class TestIntegration:
             # The redaction system should work, even if not all values are redacted
             # (implementation may vary based on detection heuristics)
 
-    def test_memory_efficient_large_traceback(self):
+    def test_memory_efficient_large_traceback(self) -> None:
         """Test memory efficiency with deep call stacks."""
 
-        def recursive_function(depth, max_depth=50):
+        def recursive_function(depth, max_depth=50) -> None:
             if depth >= max_depth:
                 raise RecursionError("Maximum recursion depth reached")
             return recursive_function(depth + 1, max_depth)
@@ -1540,7 +1541,7 @@ class TestIntegration:
 
     @patch("igreport.socket.gethostname")
     @patch("igreport.platform.system")
-    def test_environment_mocking(self, mock_system, mock_hostname):
+    def test_environment_mocking(self, mock_system, mock_hostname) -> None:
         """Test that environment information can be mocked."""
         mock_hostname.return_value = "test-server-123"
         mock_system.return_value = "TestOS"
@@ -1555,13 +1556,13 @@ class TestIntegration:
             assert report.contexts.os is not None
             assert report.contexts.os.name == "TestOS"
 
-    def test_unicode_and_encoding_handling(self):
+    def test_unicode_and_encoding_handling(self) -> None:
         """Test handling of unicode and various encodings."""
 
-        def unicode_error():
+        def unicode_error() -> None:
             unicode_text = "Hello 世界 🌍 Ñoño"
-            emoji_data = "🚀 🎉 💻"
-            special_chars = "àáâãäåæçèéêë"
+            _emoji_data = "🚀 🎉 💻"
+            _special_chars = "àáâãäåæçèéêë"
 
             raise ValueError(f"Unicode error: {unicode_text}")
 
@@ -1585,7 +1586,7 @@ class TestIntegration:
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_exception_with_no_traceback(self):
+    def test_exception_with_no_traceback(self) -> None:
         """Test handling exception with no traceback."""
         exc = ValueError("No traceback")
         exc.__traceback__ = None
@@ -1598,7 +1599,7 @@ class TestEdgeCases:
         assert report.exceptions[0].type == "ValueError"
         assert len(report.exceptions[0].frames) == 0
 
-    def test_exception_with_none_attributes(self):
+    def test_exception_with_none_attributes(self) -> None:
         """Test handling exceptions with None attributes."""
         exc = ValueError("Test")
         exc.__cause__ = None
@@ -1611,7 +1612,7 @@ class TestEdgeCases:
         assert isinstance(report, ExceptionReport)
         assert len(report.exceptions) == 1
 
-    def test_frame_with_none_locals(self):
+    def test_frame_with_none_locals(self) -> None:
         """Test handling frames with None f_locals."""
         # This is a bit tricky to test directly, but we can test the helper function
         mock_frame = Mock(spec=FrameType)
@@ -1620,7 +1621,7 @@ class TestEdgeCases:
         result = _filter_locals_for_report(mock_frame)
         assert result == {}
 
-    def test_corrupted_frame_data(self):
+    def test_corrupted_frame_data(self) -> None:
         """Test handling of corrupted or unusual frame data."""
         # Test with missing attributes
         mock_frame = Mock(spec=FrameType)
@@ -1633,7 +1634,7 @@ class TestEdgeCases:
         # This tests the robustness of the frame processing
         # The actual function calls are tested in integration tests
 
-    def test_very_long_exception_message(self):
+    def test_very_long_exception_message(self) -> None:
         """Test handling of very long exception messages."""
         long_message = "A" * 10000
 
@@ -1647,7 +1648,7 @@ class TestEdgeCases:
             assert len(exc_message) <= 130  # 100 + truncation info (allow more buffer)
             assert "truncated" in exc_message
 
-    def test_empty_tags_and_context(self):
+    def test_empty_tags_and_context(self) -> None:
         """Test with empty tags and context."""
         try:
             raise ValueError("Test")
@@ -1657,7 +1658,7 @@ class TestEdgeCases:
             assert report.tags == {}
             assert report.extra == {}
 
-    def test_none_tags_and_context(self):
+    def test_none_tags_and_context(self) -> None:
         """Test with None tags and context."""
         try:
             raise ValueError("Test")
@@ -1671,7 +1672,7 @@ class TestEdgeCases:
 class TestMissingCoverage:
     """Tests specifically designed to cover missing lines and edge cases."""
 
-    def test_is_excludable_local_code_types(self):
+    def test_is_excludable_local_code_types(self) -> None:
         """Test exclusion of CodeType, FrameType, TracebackType (line 247)."""
         from types import FrameType
 
@@ -1692,20 +1693,20 @@ class TestMissingCoverage:
             tb_obj = e.__traceback__
             assert _is_excludable_local("tb", tb_obj, mock_frame) is True
 
-    def test_safe_str_exception_handling(self):
+    def test_safe_str_exception_handling(self) -> None:
         """Test _safe_str when both str() and repr() fail (lines 321-325)."""
 
         class UnprintableObject:
-            def __str__(self):
+            def __str__(self) -> str:
                 raise ValueError("str failed")
 
-            def __repr__(self):
+            def __repr__(self) -> str:
                 raise ValueError("repr failed")
 
         try:
             raise ValueError("test")
         except ValueError as e:
-            report = create_exception_report(e, capture_locals=False)
+            _report = create_exception_report(e, capture_locals=False)
             # The _safe_str function is used internally, this tests the path
 
         # Test directly through serialization
@@ -1716,15 +1717,15 @@ class TestMissingCoverage:
             # Test with an object that fails both str and repr
             mock_locals = {"unprintable": obj}
             with patch("igreport._filter_locals_for_report", return_value=mock_locals):
-                report = create_exception_report(e, capture_locals=True)
+                _report = create_exception_report(e, capture_locals=True)
                 # Should not crash and handle unprintable objects
 
-    def test_serialize_bytes_types(self):
+    def test_serialize_bytes_types(self) -> None:
         """Test serialization of bytes, bytearray, memoryview (lines 348-350)."""
         try:
-            byte_data = b"test binary data"
-            bytearray_data = bytearray(b"test bytearray")
-            memoryview_data = memoryview(b"test memoryview")
+            _byte_data = b"test binary data"
+            _bytearray_data = bytearray(b"test bytearray")
+            _memoryview_data = memoryview(b"test memoryview")
             raise ValueError("test")
         except ValueError as e:
             report = create_exception_report(e, capture_locals=True)
@@ -1732,17 +1733,17 @@ class TestMissingCoverage:
             # Should serialize bytes types without crashing
             assert isinstance(report, ExceptionReport)
 
-    def test_serialize_large_containers(self):
+    def test_serialize_large_containers(self) -> None:
         """Test container truncation (lines 362-363, 377-378, 384-390)."""
         try:
             # Large dictionary to trigger truncation
-            large_dict = {f"key_{i}": f"value_{i}" for i in range(100)}
+            _large_dict = {f"key_{i}": f"value_{i}" for i in range(100)}
             # Large list to trigger truncation
-            large_list = list(range(100))
+            _large_list = list(range(100))
             # Large set to trigger truncation
-            large_set = set(range(100))
+            _large_set = set(range(100))
             # Large frozenset to trigger truncation
-            large_frozenset = frozenset(range(100))
+            _large_frozenset = frozenset(range(100))
             raise ValueError("test")
         except ValueError as e:
             report = create_exception_report(
@@ -1758,7 +1759,7 @@ class TestMissingCoverage:
             # Should contain truncation markers
             assert "truncated" in json_str or "__truncated__" in json_str
 
-    def test_source_context_edge_cases(self):
+    def test_source_context_edge_cases(self) -> None:
         """Test _source_context with empty/None values (line 400)."""
         try:
             # Force a scenario where abs_path or lineno might be None/empty
@@ -1769,12 +1770,12 @@ class TestMissingCoverage:
                 report = create_exception_report(e, context_lines=2)
                 assert isinstance(report, ExceptionReport)
 
-    def test_capture_locals_exception(self):
+    def test_capture_locals_exception(self) -> None:
         """Test exception handling in local variable capture (lines 439-440)."""
 
-        def problematic_locals():
+        def problematic_locals() -> None:
             # Create a scenario where _filter_locals_for_report might raise an exception
-            x = 42
+            _x = 42
             raise ValueError("test")
 
         try:
@@ -1799,7 +1800,7 @@ class TestMissingCoverage:
                 if frame_with_error and frame_with_error.vars_error:
                     assert "Filter failed" in frame_with_error.vars_error
 
-    def test_guess_in_app_paths(self):
+    def test_guess_in_app_paths(self) -> None:
         """Test _guess_in_app function edge cases (lines 452, 454)."""
         try:
             raise ValueError("test")
@@ -1814,17 +1815,17 @@ class TestMissingCoverage:
                 with patch(
                     "igreport.os.path.abspath", return_value=f"{stdlib_path}/test.py"
                 ):
-                    report = create_exception_report(e)
+                    _report = create_exception_report(e)
                     # Should mark stdlib frames as not in_app
 
                 # Create frame data with site-packages path
                 with patch(
                     "igreport.os.path.abspath", return_value=f"{site_path}/test.py"
                 ):
-                    report = create_exception_report(e)
+                    _report = create_exception_report(e)
                     # Should mark site-packages frames as not in_app
 
-    def test_format_exception_report_edge_cases(self):
+    def test_format_exception_report_edge_cases(self) -> None:
         """Test format_exception_report edge cases (lines 636, 653, 691, 723)."""
         # Test with exception that has module different from 'builtins' (line 636)
         thread_info = ThreadInfo(123456, "MainThread")
@@ -1881,7 +1882,7 @@ class TestMissingCoverage:
         assert "__dunder__" not in formatted
         assert "normal_var = 42" in formatted
 
-    def test_format_value_generic_object_type(self):
+    def test_format_value_generic_object_type(self) -> None:
         """Test _format_value with generic __type__ objects (line 723)."""
         # Test object with __type__ but no specific handling
         generic_obj = {"__type__": "GenericObject"}
@@ -1889,7 +1890,7 @@ class TestMissingCoverage:
         result = _format_value(generic_obj)
         assert result == "<GenericObject>"
 
-    def test_main_block_execution(self):
+    def test_main_block_execution(self) -> None:
         """Test the main block execution (lines 764-786)."""
         # Test by importing the module as __main__
         import subprocess
@@ -1905,7 +1906,7 @@ class TestMissingCoverage:
         assert "JSON REPORT" in result.stdout
         assert "FORMATTED REPORT" in result.stdout
 
-    def test_exception_with_suppressed_context(self):
+    def test_exception_with_suppressed_context(self) -> None:
         """Test exception chain with suppressed context."""
         try:
             try:
@@ -1921,7 +1922,7 @@ class TestMissingCoverage:
             assert len(report.exceptions) == 1
             assert report.exceptions[0].type == "RuntimeError"
 
-    def test_circular_exception_chain(self):
+    def test_circular_exception_chain(self) -> None:
         """Test protection against circular exception chains."""
         try:
             exc1 = ValueError("exc1")
@@ -1939,7 +1940,7 @@ class TestMissingCoverage:
             assert isinstance(report, ExceptionReport)
             assert len(report.exceptions) >= 1
 
-    def test_source_context_empty_path_early_return(self):
+    def test_source_context_empty_path_early_return(self) -> None:
         """Test _source_context early return with empty abs_path (line 400)."""
         # This directly tests the early return in _source_context
         try:
